@@ -1,13 +1,20 @@
 {
   "expo": {
-    "name": "willItFit",
+    "name": "Will It Fit?",
     "slug": "willItFit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "willitfit",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Will It Fit? to photograph your items.",
+        "NSLocalNetworkUsageDescription": "Allows Will It Fit? to connect to the Metro bundler on your development machine.",
+        "NSBonjourServices": ["_metro._tcp"]
+      },
+      "bundleIdentifier": "com.anonymous.willItFit"
     },
     "android": {
       "adaptiveIcon": {
@@ -16,10 +23,24 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Will It Fit? to photograph your items."
+        }
+      ]
+    ]
   }
 }
