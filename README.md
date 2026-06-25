@@ -1,15 +1,23 @@
-# Will It Fit?
+# Will it Fit? 📦🚚
 
-A mobile app that helps you plan a move. Photograph your belongings room by room, get an AI-generated packing plan with supply recommendations and truck size, then follow an interactive 3D tutorial that shows you how to load everything into the truck.
+## Project Overview
 
-## What It Does
+A mobile app that helps you plan a move with AI and 3D visualization.
 
-Will It Fit? turns a pile of moving-day guesswork into a clear, step-by-step plan:
+**Target audience:** DIY movers, small business logistics, and apartment renters.
 
-- **Inventory from photos** — snap pictures of furniture, boxes, and other items you need to move
-- **AI-powered analysis** — identifies each item, estimates dimensions, and flags fragile pieces
-- **Supply & truck recommendations** — tells you how many boxes you need, whether bubble wrap is required, and which rental truck size fits
-- **3D packing guide** — walks you through loading each box into the truck with an interactive slider and real-time 3D visualization
+## The Problem
+
+Moving is stressful because most people can't measure how much volume their furniture, electronics, and household items actually occupy. That guesswork causes real pain:
+
+- **Wrong truck size** — multiple trips and extra fees, or paying for space you don't need
+- **Packing paralysis** — unstable stacks, fragile items crushed, dead space left in the truck
+- **Supply guesswork** — too few or too many boxes, and mid-move runs to the store
+- **Damaged valuables** — fragile items packed without bubble wrap or blankets until it's too late
+
+## The Solution
+
+Will it Fit? replaces spatial guesswork with **computer vision** and **interactive 3D simulation**. Photograph your rooms, get a truck size, supply list, and step-by-step loading plan — so moving day is calculated, safe, and ideally done in one trip.
 
 All dimensions are in **feet**.
 
