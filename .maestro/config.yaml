@@ -1,0 +1,9 @@
+# Maestro workspace config for Will It Fit?
+# Install: https://docs.maestro.dev/getting-started/installing-maestro
+#
+# Local run (Android dev build recommended):
+#   export EXPO_PUBLIC_USE_MOCK=true
+#   npm run android
+#   maestro test .maestro/flows/
+#
+# appId must match app.json ios.bundleIdentifier / android package.
