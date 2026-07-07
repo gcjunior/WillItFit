@@ -1,19 +1,29 @@
 # UI Consistency Review Agent
 
-An autonomous agent that reviews **Will It Fit?** like a careful human tester: it runs the app through real user flows, compares what it sees against the design baseline, fixes safe inconsistencies, documents what it learns, and emits a structured report.
+An autonomous agent that reviews **Will It Fit?** like a careful human tester: it runs the app through real user flows, compares screenshots against saved baselines, audits styles against the design doc, **reports all issues**, and **asks before applying any fix**.
+
+## Product decisions (confirmed)
+
+| Topic | Decision |
+|-------|----------|
+| Fix policy | **Report only** — list issues and ask the user which to fix |
+| Typography | Screen title 28px, subtitle 14px, secondary button 14px |
+| Testing | **Behavior flows + screenshot comparison** |
+| Screenshot storage | Baselines committed in `.maestro/screenshots/baseline/`; compared every run |
 
 ## Goals
 
-1. **Detect** visual and interaction inconsistencies across screens (typography, spacing, buttons, safe areas).
-2. **Verify** fixes by re-running behavior tests — not just reading code.
-3. **Document** canonical rules in `docs/ui-design-system-baseline.md` and append learnings after each run.
-4. **Report** all findings in `docs/reports/ui-consistency-YYYY-MM-DD.md` (open issues + fixes applied).
+1. **Detect** visual and interaction inconsistencies (typography, spacing, buttons, layout, pixels).
+2. **Verify** with Maestro behavior tests and `assertScreenshot` against saved baselines.
+3. **Document** rules in `docs/ui-design-system-baseline.md` and append learnings after each run.
+4. **Report** findings in `docs/reports/ui-consistency-YYYY-MM-DD.md`.
+5. **Ask** the user which reported issues should be fixed — never auto-fix without approval.
 
 ## Non-goals
 
-- Pixel-perfect visual regression on 3D OpenGL canvas (device-dependent; test presence and step labels instead).
 - Rewriting the design system without human approval.
 - Camera/OpenAI integration testing (use mock mode).
+- Pixel-perfect 3D canvas comparison (lower threshold on packing screen).
 
 ---
 
@@ -22,108 +32,123 @@ An autonomous agent that reviews **Will It Fit?** like a careful human tester: i
 ```mermaid
 flowchart TD
   A[Read baseline + prior reports] --> B[Run Maestro behavior flows]
-  B --> C{Flow passes?}
-  C -->|No| D[Capture failure context]
-  C -->|Yes| E[Static token audit]
-  D --> F[Classify: bug vs inconsistency vs flake]
-  E --> G[Compare styles to baseline]
-  F --> G
-  G --> H{Auto-fix allowed?}
-  H -->|Yes| I[Apply minimal style fix]
-  H -->|No| J[Log to report only]
-  I --> K[Re-run affected flows]
-  K --> B
-  J --> L[Update baseline changelog]
-  K --> L
-  L --> M[Write final report]
+  B --> C[Run visual-regression.yaml]
+  C --> D[Static token audit]
+  D --> E[Compile issue list]
+  E --> F[Write report]
+  F --> G[Ask user which fixes to apply]
+  G -->|User approves| H[Apply minimal fixes]
+  H --> I[Re-run tests + update baselines if intentional]
+  I --> J[Update docs changelog]
+  G -->|User declines| J
 ```
 
 ### Tooling
 
 | Layer | Tool | Why |
 |-------|------|-----|
-| Behavior tests | [Maestro](https://docs.maestro.dev/) | Drives the real app via accessibility tree; no test library in the bundle |
-| Mock data | `EXPO_PUBLIC_USE_MOCK=true` | Deterministic full flow without camera/API |
-| Design rules | `docs/ui-design-system-baseline.md` | Single source of truth the agent reads and updates |
-| Static checks | ripgrep on `fontSize`, hardcoded hex, `SafeAreaView` edges | Fast second pass after behavior tests |
-| CI (optional) | EAS Workflows + Maestro job | See [Expo E2E guide](https://docs.expo.dev/eas/workflows/examples/e2e-tests/) |
+| Behavior tests | [Maestro](https://docs.maestro.dev/) flows in `.maestro/flows/` | Drives the real app like a user |
+| Screenshot baselines | Maestro `takeScreenshot` + `assertScreenshot` | Saves PNGs for next-run comparison |
+| Baseline storage | `.maestro/screenshots/baseline/*.png` | Committed to git; diff on change |
+| Mock data | `EXPO_PUBLIC_USE_MOCK=true` | Deterministic flow without camera/API |
+| Design rules | `docs/ui-design-system-baseline.md` | Canonical typography and tokens |
+| Static checks | ripgrep on styles | Catches token drift code can't see in pixels |
 
 ### Platform note
 
-Expo SDK 56 / React Native 0.85.3 has a [known iOS accessibility hierarchy gap with Maestro](https://github.com/mobile-dev-inc/maestro/issues/3367). **Prefer Android emulator for agent runs until resolved.** iOS can be used for manual spot checks.
+Prefer **Android emulator** for Maestro (iOS RN 0.85 accessibility tree issue). Use the **same emulator profile** for baseline capture and comparison.
 
 ---
 
-## Agent workflow (step by step)
+## Agent workflow
 
 ### Phase 0 — Bootstrap
 
-1. Read `AGENTS.md`, `constants/theme.ts`, and `docs/ui-design-system-baseline.md`.
-2. Read the most recent report in `docs/reports/` if any.
-3. Confirm mock mode: `.env` should include `EXPO_PUBLIC_USE_MOCK=true` for automated runs.
+1. Read `AGENTS.md`, `constants/theme.ts`, `docs/ui-design-system-baseline.md`.
+2. Read the latest `docs/reports/ui-consistency-*.md`.
+3. Confirm `EXPO_PUBLIC_USE_MOCK=true` for automated runs.
+4. Verify baselines exist: `node scripts/compare-screenshots.mjs`.
 
-### Phase 1 — Behavior tests (human-like)
-
-Run the full mock journey:
+### Phase 1 — Behavior tests
 
 ```bash
-# Terminal 1 — start app (Android recommended)
 export EXPO_PUBLIC_USE_MOCK=true
-npm run android   # or: npm start + dev client on device
+npm run android
 
-# Terminal 2 — run flows
-maestro test .maestro/flows/
+# Terminal 2
+npm run test:ui:behavior
+# maestro test .maestro/flows/mock-demo-to-summary.yaml ...
+# maestro test .maestro/flows/summary-to-packing.yaml ...
+# maestro test .maestro/flows/packing-navigation.yaml ...
+# maestro test .maestro/flows/retake-photos.yaml
 ```
 
-Flows live in `.maestro/flows/`. Each flow asserts **what a user would notice**:
+Assert visible labels, navigation, and step text — what a user would notice.
 
-- Expected screen titles and button labels appear
-- Navigation works (demo → summary → packing → back → retake)
-- Packing slider shows step text (`Step 1 of N`)
-- No error banners during happy path
+### Phase 2 — Screenshot comparison
 
-On failure: save Maestro output, screenshot if available, and note which assertion failed. Do **not** auto-fix until the failure is classified (test bug vs app bug vs platform flake).
+```bash
+npm run test:ui:visual
+# maestro test .maestro/flows/visual-regression.yaml
+```
 
-### Phase 2 — Static consistency audit
+Compares each screen to committed baselines:
 
-Search for drift against baseline:
+| Baseline | Screen | Match threshold |
+|----------|--------|-----------------|
+| `01-camera-home.png` | Camera (mock CTA) | 98% |
+| `02-summary.png` | Moving plan | 98% |
+| `03-packing.png` | Packing tutorial | 90% (3D varies) |
+
+On failure: inspect Maestro diff PNGs (`*_diff.png`). Log visual drift in the report.
+
+**First-time setup** (no baselines yet):
+
+```bash
+npm run test:ui:baseline
+git add .maestro/screenshots/baseline/*.png
+git commit -m "Add UI screenshot baselines"
+```
+
+Re-capture baselines only after **intentional** UI changes the user approves.
+
+### Phase 3 — Static audit
 
 ```bash
 rg "fontSize:|fontWeight:|edges=\[" app/ components/
 rg "#[0-9A-Fa-f]{6}" app/ components/ --glob '!**/Truck*.tsx'
 ```
 
-Map each hit to a baseline rule. Cross-reference the seed list in the baseline doc.
+Map hits to baseline rules and the seed inconsistency table.
 
-### Phase 3 — Fix (minimal scope)
+### Phase 4 — Report (no fixes yet)
 
-**Auto-fix policy:**
+Write `docs/reports/ui-consistency-YYYY-MM-DD.md`. Include:
 
-| Category | Auto-fix? | Example |
-|----------|-----------|---------|
-| Token drift (wrong fontSize on title) | Yes | packing title 24 → 28 |
-| Hardcoded color matching existing token | Yes | `#E2E8F0` → `colors.border` |
-| New theme token needed | No — report only | truck highlight blues |
-| Layout behavior change | No — report only | SafeArea edge changes affecting 3D canvas |
-| 3D / camera styling | No | Wireframe colors |
+- Behavior test results
+- Screenshot comparison results (pass/fail + diff paths)
+- Static audit issues with severity
+- **Recommended fixes** grouped by effort
 
-Rules for fixes:
+End the report with:
 
-- One concern per commit.
-- Reuse `constants/theme.ts`; extend it only when reporting proposes a new semantic token.
-- Match the nearest existing component (copy `analyzeButton` patterns, not invent new ones).
+> **Which issues should I fix?** Reply with issue IDs (e.g. UI-001, UI-002) or "fix all safe".
 
-### Phase 4 — Learn & document
+### Phase 5 — Fix (only after user approval)
 
-After each run, update **baseline changelog** with:
+| Category | Fix when user says yes |
+|----------|------------------------|
+| Token drift (wrong fontSize) | Align to baseline |
+| Hardcoded hex matching a theme token | Replace with token |
+| New theme token | Add to `theme.ts` + baseline doc |
+| Layout / safe area | Only if user explicitly approves |
+| Intentional visual redesign | Re-capture screenshot baselines |
 
-- New rules discovered
-- Intentional exceptions (e.g. camera overlay)
-- False positives from tests
+After fixes: re-run behavior + visual tests, then ask whether to update baselines.
 
-### Phase 5 — Report
+### Phase 6 — Learn & document
 
-Write `docs/reports/ui-consistency-YYYY-MM-DD.md` using the template below.
+Update baseline **Changelog** with new rules, exceptions, and baseline refresh dates.
 
 ---
 
@@ -133,63 +158,69 @@ Write `docs/reports/ui-consistency-YYYY-MM-DD.md` using the template below.
 # UI Consistency Report — YYYY-MM-DD
 
 ## Summary
-- Flows run: N passed / M failed
-- Issues found: X
-- Auto-fixed: Y
-- Open: Z
+- Behavior flows: N passed / M failed
+- Screenshot checks: N passed / M failed
+- Static issues: X
+- Fixes applied: 0 (awaiting approval)
 
 ## Behavior test results
 | Flow | Result | Notes |
 |------|--------|-------|
 
+## Screenshot comparison
+| Screen | Baseline | Result | Threshold | Diff |
+|--------|----------|--------|-----------|------|
+| Camera home | 01-camera-home.png | pass/fail | 98% | path or — |
+
 ## Issues
 
 ### UI-NNN — Title
 - **Severity:** high | medium | low
-- **Screen:** 
-- **Observed:** 
-- **Expected (baseline):** 
-- **Status:** fixed | open | wontfix
-- **Fix:** (commit/PR link if fixed)
+- **Source:** behavior | screenshot | static
+- **Screen:**
+- **Observed:**
+- **Expected (baseline):**
+- **Status:** open
+- **Suggested fix:**
 
-## Baseline updates
-- (bullets)
+## Recommended fixes (awaiting your approval)
+1. UI-001 — …
+2. UI-002 — …
 
-## Recommended follow-ups
-- (human decisions needed)
+> **Which issues should I fix?**
 ```
 
 ---
 
-## Maestro flows (included)
+## npm scripts
 
-| File | User story |
-|------|------------|
-| `mock-demo-to-summary.yaml` | Home → Run Demo → sees "Your Moving Plan" |
-| `summary-to-packing.yaml` | Summary → View Packing Tutorial → sees slider |
-| `packing-navigation.yaml` | Packing → Back → returns to Summary |
-| `retake-photos.yaml` | Summary → Retake Photos → Camera home |
-
-Run individually during debugging:
-
-```bash
-maestro test .maestro/flows/mock-demo-to-summary.yaml
-```
+| Script | Command |
+|--------|---------|
+| `npm run test:ui:behavior` | All behavior Maestro flows |
+| `npm run test:ui:visual` | Screenshot regression |
+| `npm run test:ui:baseline` | Capture new baseline PNGs |
+| `npm run test:ui` | Behavior + visual |
+| `npm run test:ui:check-baselines` | Verify baseline PNGs exist |
 
 ---
 
-## Cursor agent invocation
+## Cursor agent
 
-Use the agent definition at `.cursor/agents/ui-consistency-reviewer.md` (or paste its contents as the task prompt).
-
-Suggested trigger phrases:
+Invoke via `.cursor/agents/ui-consistency-reviewer.md`:
 
 - "Run UI consistency review"
-- "Audit UI against baseline and fix safe issues"
-- "Run Maestro flows and report UI drift"
+- "Run Maestro flows and screenshot comparison; report issues"
 
 ---
 
-## Open questions for product owner
+## Resolved product questions
 
-See parent conversation — agent should not guess answers to these; log them in the report **Recommended follow-ups** section.
+- **Fix scope:** Report and ask before fixing ✓
+- **Typography canon:** 28 / 14 / 14 ✓
+- **Visual regression:** Behavior + screenshot baselines ✓
+
+## Still open (log in report if relevant)
+
+- Truck highlight card — special accent vs new theme token?
+- CI on every PR via EAS Workflows?
+- iOS Maestro when accessibility tree is fixed?

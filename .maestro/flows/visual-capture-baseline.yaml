@@ -1,0 +1,32 @@
+appId: com.anonymous.willItFit
+---
+# Capture baseline screenshots for visual regression.
+# Requires EXPO_PUBLIC_USE_MOCK=true and a fixed Android emulator resolution.
+#
+# Run once (or after intentional UI changes):
+#   maestro test .maestro/flows/visual-capture-baseline.yaml
+#
+# Commit the PNGs under .maestro/screenshots/baseline/
+- launchApp
+- extendedWaitUntil:
+    visible: "Run Demo \\(Mock Data\\)"
+    timeout: 30000
+- takeScreenshot:
+    path: screenshots/baseline/01-camera-home
+    label: Baseline — camera home with mock CTA
+
+- tapOn: "Run Demo \\(Mock Data\\)"
+- extendedWaitUntil:
+    visible: "Your Moving Plan"
+    timeout: 30000
+- takeScreenshot:
+    path: screenshots/baseline/02-summary
+    label: Baseline — moving plan summary
+
+- tapOn: "View Packing Tutorial"
+- extendedWaitUntil:
+    visible: "Packing Tutorial"
+    timeout: 30000
+- takeScreenshot:
+    path: screenshots/baseline/03-packing
+    label: Baseline — packing tutorial (3D may vary slightly by device)

@@ -40,3 +40,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Maestro ephemeral screenshot output (baselines under baseline/ are committed)
+.maestro/screenshots/current/
+.maestro/screenshots/diff/
+.maestro/**/*_diff.png
