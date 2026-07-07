@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { MAX_PHOTOS } from '../../constants/config';
+import { MAX_PHOTOS, CAMERA_SUBJECT_DISTANCE_METERS, METERS_TO_FEET } from '../../constants/config';
 import { colors, radius, spacing } from '../../constants/theme';
 
 type MultiPhotoCameraProps = {
@@ -60,9 +60,16 @@ export function MultiPhotoCamera({ photos, onCapture, onRemove }: MultiPhotoCame
     }
   };
 
+  const distanceHint = `Hold the camera about ${CAMERA_SUBJECT_DISTANCE_METERS} m (${(
+    CAMERA_SUBJECT_DISTANCE_METERS * METERS_TO_FEET
+  ).toFixed(0)} ft) from your items.`;
+
   return (
     <View style={styles.container}>
       <CameraView ref={cameraRef} style={styles.camera} facing="back" />
+      <View style={styles.distanceHintWrap}>
+        <Text style={styles.distanceHint}>{distanceHint}</Text>
+      </View>
       <View style={styles.overlay}>
         <Text style={styles.counter}>
           Photo {photos.length + 1}
@@ -103,6 +110,23 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  distanceHintWrap: {
+    position: 'absolute',
+    top: spacing.md,
+    left: spacing.md,
+    right: spacing.md,
+    alignItems: 'center',
+  },
+  distanceHint: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
   },
   overlay: {
     position: 'absolute',
@@ -146,7 +170,7 @@ const styles = StyleSheet.create({
   },
   thumbnailStrip: {
     position: 'absolute',
-    top: spacing.md,
+    top: 52,
     left: 0,
     right: 0,
     maxHeight: 88,
