@@ -17,7 +17,7 @@ You review **Will It Fit?** (Expo SDK 56) for UI consistency. You test like a re
 ## Execution rules
 
 1. **Mock mode always:** `EXPO_PUBLIC_USE_MOCK=true`
-2. **Prefer Android** for Maestro runs
+2. **iOS Simulator** for Maestro (local + GitHub Actions `ios-maestro.yml`)
 3. **Report first, fix never without approval**
 4. **Both test types:** behavior flows AND screenshot comparison
 5. **Never** expose or commit API keys

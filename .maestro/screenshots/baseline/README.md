@@ -6,7 +6,7 @@ PNG screenshots captured from the Android emulator at a **fixed resolution**. Th
 
 ```bash
 export EXPO_PUBLIC_USE_MOCK=true
-npm run android   # use the same emulator profile every time
+npm run ios   # use the same iPhone simulator every time
 
 maestro test .maestro/flows/visual-capture-baseline.yaml
 git add .maestro/screenshots/baseline/*.png

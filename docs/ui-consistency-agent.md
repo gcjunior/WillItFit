@@ -56,7 +56,11 @@ flowchart TD
 
 ### Platform note
 
-Prefer **Android emulator** for Maestro (iOS RN 0.85 accessibility tree issue). Use the **same emulator profile** for baseline capture and comparison.
+**CI uses iOS Simulator** on GitHub Actions (`macos-15` runner). See `.github/workflows/ios-maestro.yml`.
+
+Locally, use the **same iPhone simulator model + iOS version** every time for screenshot baselines.
+
+> **Known risk:** Expo SDK 56 / RN 0.85.3 may expose an empty accessibility tree to Maestro on some iOS versions ([maestro#3367](https://github.com/mobile-dev-inc/maestro/issues/3367)). If CI behavior tests fail while the UI is visibly correct, check the uploaded artifacts and track that upstream issue.
 
 ---
 
@@ -200,7 +204,23 @@ Update baseline **Changelog** with new rules, exceptions, and baseline refresh d
 | `npm run test:ui:visual` | Screenshot regression |
 | `npm run test:ui:baseline` | Capture new baseline PNGs |
 | `npm run test:ui` | Behavior + visual |
+| `npm run test:ui:ci` | CI entrypoint (behavior + visual if baselines exist) |
 | `npm run test:ui:check-baselines` | Verify baseline PNGs exist |
+
+## GitHub Actions (iOS)
+
+Workflow: `.github/workflows/ios-maestro.yml` — runs on `pull_request` and push to `master` / `main`.
+
+```
+checkout → npm ci → mock mode → Maestro install
+    → expo prebuild (ios) → boot Simulator → Release build
+    → grant camera → Maestro behavior (+ visual if baselines committed)
+    → upload .maestro/results + screenshots
+```
+
+**First-time visual regression in CI:** capture baselines on the same simulator profile locally, commit PNGs under `.maestro/screenshots/baseline/`, then push. Until then, CI runs behavior tests only and skips visual comparison.
+
+**Artifacts:** each run uploads `maestro-ios-<run_id>` with JUnit XML, debug output, screenshots, and diff PNGs.
 
 ---
 

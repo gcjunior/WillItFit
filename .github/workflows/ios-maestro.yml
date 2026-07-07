@@ -1,0 +1,87 @@
+name: iOS Maestro Tests
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+concurrency:
+  group: ios-maestro-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  EXPO_PUBLIC_USE_MOCK: 'true'
+  MAESTRO_CLI_NO_ANALYTICS: '1'
+
+jobs:
+  ios-maestro:
+    runs-on: macos-15
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Configure mock mode
+        run: |
+          cp .env.example .env
+          echo "EXPO_PUBLIC_USE_MOCK=true" >> .env
+
+      - name: Install Maestro
+        run: curl -Ls "https://get.maestro.mobile.dev" | bash
+
+      - name: Add Maestro to PATH
+        run: echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Generate iOS native project
+        run: npx expo prebuild --platform ios --non-interactive
+
+      - name: Boot iOS Simulator
+        id: simulator
+        run: bash scripts/ci-boot-ios-simulator.sh
+
+      - name: Build and install app on Simulator (Release)
+        run: |
+          npx expo run:ios \
+            --configuration Release \
+            --no-bundler \
+            --non-interactive \
+            --device "${{ steps.simulator.outputs.device_udid }}"
+
+      - name: Grant camera permission on Simulator
+        run: |
+          xcrun simctl privacy "${{ steps.simulator.outputs.device_udid }}" grant camera com.anonymous.willItFit
+
+      - name: Run Maestro tests
+        run: node scripts/run-maestro-ci.mjs
+
+      - name: Upload Maestro results and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-ios-${{ github.run_id }}
+          path: |
+            .maestro/results/
+            .maestro/screenshots/
+            .maestro/**/*_diff.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish behavior JUnit report
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: .maestro/results/maestro-behavior-junit.xml
+          check_name: Maestro behavior (iOS)
+          fail_on_failure: false
+        continue-on-error: true

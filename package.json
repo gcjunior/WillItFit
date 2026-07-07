@@ -41,7 +41,8 @@
     "test:ui:visual": "maestro test .maestro/flows/visual-regression.yaml",
     "test:ui:baseline": "maestro test .maestro/flows/visual-capture-baseline.yaml",
     "test:ui:check-baselines": "node scripts/compare-screenshots.mjs",
-    "test:ui": "npm run test:ui:behavior && npm run test:ui:visual"
+    "test:ui": "npm run test:ui:behavior && npm run test:ui:visual",
+    "test:ui:ci": "node scripts/run-maestro-ci.mjs"
   },
   "private": true
 }
