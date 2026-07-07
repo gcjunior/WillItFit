@@ -22,7 +22,10 @@ export default function CameraScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <Text style={styles.title}>Will It Fit?</Text>
-        <Text style={styles.subtitle}>Photograph your items room by room.</Text>
+        <Text style={styles.subtitle}>
+          Photograph your items room by room. Stand about 1 meter (3 ft) from each item for accurate
+          sizing.
+        </Text>
       </View>
 
       <View style={styles.cameraWrap}>

@@ -3,6 +3,14 @@ export const OPENAI_MODEL = 'gpt-4o';
 export const MAX_PHOTOS = 10;
 export const IMAGE_MAX_WIDTH = 1024;
 
+/** Assumed distance from camera to photographed items (meters). */
+export const CAMERA_SUBJECT_DISTANCE_METERS = 1;
+
+/** Typical smartphone rear-camera horizontal field of view. */
+export const CAMERA_HORIZONTAL_FOV_DEGREES = 68;
+
+export const METERS_TO_FEET = 3.28084;
+
 export const BOX_COLORS = [
   '#E74C3C',
   '#3498DB',
