@@ -9,7 +9,7 @@ An autonomous agent that reviews **Will It Fit?** like a careful human tester: i
 | Fix policy | **Report only** — list issues and ask the user which to fix |
 | Typography | Screen title 28px, subtitle 14px, secondary button 14px |
 | Testing | **Behavior flows + screenshot comparison** |
-| Screenshot storage | Baselines committed in `.maestro/screenshots/baseline/`; compared every run |
+| Screenshot storage | Reference PNGs in `public/screenshots/{screen}.png`; compare only (no auto-capture) |
 
 ## Goals
 
@@ -48,8 +48,7 @@ flowchart TD
 | Layer | Tool | Why |
 |-------|------|-----|
 | Behavior tests | [Maestro](https://docs.maestro.dev/) flows in `.maestro/flows/` | Drives the real app like a user |
-| Screenshot baselines | Maestro `takeScreenshot` + `assertScreenshot` | Saves PNGs for next-run comparison |
-| Baseline storage | `.maestro/screenshots/baseline/*.png` | Committed to git; diff on change |
+| Screenshot references | `public/screenshots/*.png` | One file per screen name; committed manually |
 | Mock data | `EXPO_PUBLIC_USE_MOCK=true` | Deterministic flow without camera/API |
 | Design rules | `docs/ui-design-system-baseline.md` | Canonical typography and tokens |
 | Static checks | ripgrep on styles | Catches token drift code can't see in pixels |
@@ -71,7 +70,7 @@ Locally, use the **same iPhone simulator model + iOS version** every time for sc
 1. Read `AGENTS.md`, `constants/theme.ts`, `docs/ui-design-system-baseline.md`.
 2. Read the latest `docs/reports/ui-consistency-*.md`.
 3. Confirm `EXPO_PUBLIC_USE_MOCK=true` for automated runs.
-4. Verify baselines exist: `node scripts/compare-screenshots.mjs`.
+4. Verify references exist: `npm run test:ui:check-screenshots`
 
 ### Phase 1 — Behavior tests
 
@@ -91,30 +90,21 @@ Assert visible labels, navigation, and step text — what a user would notice.
 
 ### Phase 2 — Screenshot comparison
 
+Compares each screen to reference PNGs in `public/screenshots/` (filenames match screen names).
+
 ```bash
 npm run test:ui:visual
-# maestro test .maestro/flows/visual-regression.yaml
 ```
 
-Compares each screen to committed baselines:
+| Reference file | Screen | Match threshold |
+|----------------|--------|-----------------|
+| `public/screenshots/index.png` | Camera home (`/`) | 98% |
+| `public/screenshots/summary.png` | Moving plan | 98% |
+| `public/screenshots/packing.png` | Packing tutorial | 90% (3D varies) |
 
-| Baseline | Screen | Match threshold |
-|----------|--------|-----------------|
-| `01-camera-home.png` | Camera (mock CTA) | 98% |
-| `02-summary.png` | Moving plan | 98% |
-| `03-packing.png` | Packing tutorial | 90% (3D varies) |
+On failure: inspect Maestro diff PNGs (e.g. `public/screenshots/summary_diff.png`).
 
-On failure: inspect Maestro diff PNGs (`*_diff.png`). Log visual drift in the report.
-
-**First-time setup** (no baselines yet):
-
-```bash
-npm run test:ui:baseline
-git add .maestro/screenshots/baseline/*.png
-git commit -m "Add UI screenshot baselines"
-```
-
-Re-capture baselines only after **intentional** UI changes the user approves.
+**Adding references:** save screenshots manually into `public/screenshots/` — see `public/screenshots/README.md`. Re-commit when the design intentionally changes.
 
 ### Phase 3 — Static audit
 
@@ -174,7 +164,7 @@ Update baseline **Changelog** with new rules, exceptions, and baseline refresh d
 ## Screenshot comparison
 | Screen | Baseline | Result | Threshold | Diff |
 |--------|----------|--------|-----------|------|
-| Camera home | 01-camera-home.png | pass/fail | 98% | path or — |
+| Camera home | index.png | pass/fail | 98% | path or — |
 
 ## Issues
 
@@ -201,11 +191,10 @@ Update baseline **Changelog** with new rules, exceptions, and baseline refresh d
 | Script | Command |
 |--------|---------|
 | `npm run test:ui:behavior` | All behavior Maestro flows |
-| `npm run test:ui:visual` | Screenshot regression |
-| `npm run test:ui:baseline` | Capture new baseline PNGs |
+| `npm run test:ui:visual` | Screenshot comparison vs `public/screenshots/` |
 | `npm run test:ui` | Behavior + visual |
-| `npm run test:ui:ci` | CI entrypoint (behavior + visual if baselines exist) |
-| `npm run test:ui:check-baselines` | Verify baseline PNGs exist |
+| `npm run test:ui:ci` | CI entrypoint (behavior + visual if references exist) |
+| `npm run test:ui:check-screenshots` | Verify reference PNGs exist |
 
 ## GitHub Actions (iOS)
 
@@ -214,11 +203,11 @@ Workflow: `.github/workflows/ios-maestro.yml` — runs on `pull_request` and pus
 ```
 checkout → npm ci → mock mode → Maestro install
     → expo prebuild (ios) → boot Simulator → Release build
-    → grant camera → Maestro behavior (+ visual if baselines committed)
-    → upload .maestro/results + screenshots
+    → grant camera → Maestro behavior (+ visual if public/screenshots/*.png exist)
+    → upload .maestro/results + diff images
 ```
 
-**First-time visual regression in CI:** capture baselines on the same simulator profile locally, commit PNGs under `.maestro/screenshots/baseline/`, then push. Until then, CI runs behavior tests only and skips visual comparison.
+**Visual regression:** requires `public/screenshots/index.png`, `summary.png`, `packing.png` committed manually. Until then, CI runs behavior tests only.
 
 **Artifacts:** each run uploads `maestro-ios-<run_id>` with JUnit XML, debug output, screenshots, and diff PNGs.
 

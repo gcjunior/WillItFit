@@ -99,19 +99,17 @@ Prefer visible text (already present):
 
 Add `testID` only when text alone is ambiguous (e.g. slider thumb). Do not rely on invisible views on iOS (RN 0.85 accessibility quirk).
 
-## Screenshot baselines
+## Screenshot references
 
-Visual regression compares live emulator output to PNGs in `.maestro/screenshots/baseline/`.
+Visual regression compares the Simulator to PNGs in `public/screenshots/` (one file per screen name).
 
 | File | Screen | assertScreenshot threshold |
 |------|--------|----------------------------|
-| `01-camera-home.png` | Camera home (mock mode) | 98% |
-| `02-summary.png` | Moving plan summary | 98% |
-| `03-packing.png` | Packing tutorial | 90% (3D canvas) |
+| `index.png` | Camera home (`app/index.tsx`) | 98% |
+| `summary.png` | Moving plan | 98% |
+| `packing.png` | Packing tutorial | 90% (3D canvas) |
 
-Capture: `npm run test:ui:baseline` · Compare: `npm run test:ui:visual`
-
-Re-capture baselines only after **user-approved** visual changes.
+Compare: `npm run test:ui:visual` · References are added manually (see `public/screenshots/README.md`).
 
 ## Changelog (agent updates this section)
 

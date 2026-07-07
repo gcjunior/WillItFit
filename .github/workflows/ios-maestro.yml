@@ -72,8 +72,7 @@ jobs:
           name: maestro-ios-${{ github.run_id }}
           path: |
             .maestro/results/
-            .maestro/screenshots/
-            .maestro/**/*_diff.png
+            public/screenshots/*_diff.png
           if-no-files-found: warn
           retention-days: 14
 

@@ -5,9 +5,6 @@
 #   export EXPO_PUBLIC_USE_MOCK=true
 #   npm run ios
 #   npm run test:ui              # behavior + screenshot comparison
-#   npm run test:ui:baseline     # first-time: capture baseline PNGs
 #
-# CI: .github/workflows/ios-maestro.yml (macOS runner + iOS Simulator)
-#
-# appId must match app.json ios.bundleIdentifier / android package.
-# Screenshot baselines: .maestro/screenshots/baseline/ (committed to git)
+# Reference screenshots: public/screenshots/{screen}.png (index, summary, packing)
+# CI: .github/workflows/ios-maestro.yml

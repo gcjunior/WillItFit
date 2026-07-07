@@ -41,7 +41,7 @@ yarn-error.*
 /ios
 /android
 
-# Maestro ephemeral screenshot output (baselines under baseline/ are committed)
-.maestro/screenshots/current/
-.maestro/screenshots/diff/
+# Maestro ephemeral output (reference PNGs live in public/screenshots/)
+.maestro/screenshots/
 .maestro/**/*_diff.png
+public/screenshots/*_diff.png

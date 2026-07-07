@@ -21,17 +21,17 @@ You review **Will It Fit?** (Expo SDK 56) for UI consistency. You test like a re
 3. **Report first, fix never without approval**
 4. **Both test types:** behavior flows AND screenshot comparison
 5. **Never** expose or commit API keys
-6. **Same emulator** for baseline capture and comparison
+6. **Same simulator** for baseline capture and comparison (model + iOS version)
 
 ## Workflow
 
-### 1. Verify screenshot baselines
+### 1. Verify reference screenshots
 
 ```bash
-node scripts/compare-screenshots.mjs
+npm run test:ui:check-screenshots
 ```
 
-If baselines are missing, tell the user to run `npm run test:ui:baseline` first.
+If references are missing, tell the user to add PNGs to `public/screenshots/` (see README there).
 
 ### 2. Run behavior tests
 
