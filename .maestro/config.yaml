@@ -1,0 +1,11 @@
+# Maestro workspace config for Will It Fit?
+# Install: https://docs.maestro.dev/getting-started/installing-maestro
+#
+# Local run (Android dev build recommended):
+#   export EXPO_PUBLIC_USE_MOCK=true
+#   npm run android
+#   npm run test:ui              # behavior + screenshot comparison
+#   npm run test:ui:baseline     # first-time: capture baseline PNGs
+#
+# appId must match app.json ios.bundleIdentifier / android package.
+# Screenshot baselines: .maestro/screenshots/baseline/ (committed to git)

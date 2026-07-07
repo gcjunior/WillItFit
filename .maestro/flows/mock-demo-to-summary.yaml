@@ -1,0 +1,14 @@
+appId: com.anonymous.willItFit
+---
+# Requires EXPO_PUBLIC_USE_MOCK=true so "Run Demo (Mock Data)" is visible.
+- launchApp
+- extendedWaitUntil:
+    visible: "Will It Fit?"
+    timeout: 30000
+- tapOn: "Run Demo \\(Mock Data\\)"
+- extendedWaitUntil:
+    visible: "Your Moving Plan"
+    timeout: 30000
+- assertVisible: "View Packing Tutorial"
+- assertVisible: "Retake Photos"
+- assertVisible: "Recommended Truck"

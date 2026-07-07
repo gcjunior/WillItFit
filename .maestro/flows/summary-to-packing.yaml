@@ -1,0 +1,19 @@
+appId: com.anonymous.willItFit
+---
+# Prerequisite: analysis result loaded (run mock-demo-to-summary first, or use maestro --continuous).
+- launchApp
+- extendedWaitUntil:
+    visible: "Run Demo \\(Mock Data\\)"
+    timeout: 30000
+- tapOn: "Run Demo \\(Mock Data\\)"
+- extendedWaitUntil:
+    visible: "Your Moving Plan"
+    timeout: 30000
+- tapOn: "View Packing Tutorial"
+- extendedWaitUntil:
+    visible: "Packing Tutorial"
+    timeout: 30000
+- assertVisible: "Drag the slider to place each box inside the truck."
+- assertVisible:
+    text: "Step 1 of"
+    optional: false

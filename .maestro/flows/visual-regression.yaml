@@ -1,0 +1,33 @@
+appId: com.anonymous.willItFit
+---
+# Compare current UI against committed baseline screenshots.
+# Requires baselines from visual-capture-baseline.yaml in .maestro/screenshots/baseline/
+#
+# Run on every review:
+#   maestro test .maestro/flows/visual-regression.yaml
+- launchApp
+- extendedWaitUntil:
+    visible: "Run Demo \\(Mock Data\\)"
+    timeout: 30000
+- assertScreenshot:
+    path: screenshots/baseline/01-camera-home.png
+    thresholdPercentage: 98
+    label: Camera home matches baseline
+
+- tapOn: "Run Demo \\(Mock Data\\)"
+- extendedWaitUntil:
+    visible: "Your Moving Plan"
+    timeout: 30000
+- assertScreenshot:
+    path: screenshots/baseline/02-summary.png
+    thresholdPercentage: 98
+    label: Summary screen matches baseline
+
+- tapOn: "View Packing Tutorial"
+- extendedWaitUntil:
+    visible: "Packing Tutorial"
+    timeout: 30000
+- assertScreenshot:
+    path: screenshots/baseline/03-packing.png
+    thresholdPercentage: 90
+    label: Packing screen matches baseline (lower threshold — 3D canvas)
